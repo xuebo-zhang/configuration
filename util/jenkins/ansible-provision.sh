@@ -521,5 +521,21 @@ if [[ $enable_newrelic == "true" ]]; then
     run_ansible run_role.yml -i "${deploy_host}," -e role=newrelic_infrastructure $extra_var_arg  --user ubuntu
 fi
 
+run_ansible run_role.yml -i "${deploy_host}," -e role=minikube $extra_var_arg  --user ubuntu
+
+if [[ $argocd == "true" ]]; then
+    # setup minikube on sandbox
+    run_ansible run_role.yml -i "${deploy_host}," -e role=minikube $extra_var_arg  --user ubuntu
+
+    kustomize build $WORKSPACE/edx-internal/argocd/applications/argocd/development -o argocd.yaml
+    kustomize build $WORKSPACE/edx-internal/argocd/clusters/development -o cluster.yaml
+
+    ansible -c ssh -i "${deploy_host}," $deploy_host -m copy  -a "src=argocd.yaml dest=/var/tmp/argocd.yaml" -u ubuntu -b
+    ansible -c ssh -i "${deploy_host}," $deploy_host -m copy  -a "src=cluster.yaml dest=/var/tmp/cluster.yml" -u ubuntu -b
+
+    ansible -c ssh -i "${deploy_host}," $deploy_host -m shell -a "kubectl apply -f /var/tmp/argocd.yaml" -u ubuntu -b
+    ansible -c ssh -i "${deploy_host}," $deploy_host -m shell -a "kubectl apply -f /var/tmp/cluster.yml" -u ubuntu -b
+fi
+
 rm -f "$extra_vars_file"
 rm -f ${extra_vars_file}_clean

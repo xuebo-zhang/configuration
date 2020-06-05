@@ -1,0 +1,14 @@
+---
+
+- name: get required binaries and put to executables path
+  get_url:
+    url: "{{ item.url }}"
+    dest: "{{ item.dest }}"
+    mode: "0755"
+  with_items: "{{ minikube_packages }}"
+
+- name: start minikube
+  shell:
+    minikube start \
+      --vm-driver=none --memory=9000 \
+      --kubernetes-version={{ kubernetes_version }}
