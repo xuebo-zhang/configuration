@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import print_function
 import sys
 import pickle
 import json
@@ -26,7 +24,7 @@ QUEUE_AGE_HASH_NAME = "queue_age_monitoring"
 DATE_FORMAT = '%Y-%m-%d %H:%M:%S.%f'
 
 
-class RedisWrapper(object):
+class RedisWrapper:
     def __init__(self, dev_test_mode=None, *args, **kwargs):
         assert isinstance(dev_test_mode, bool)
         self.dev_test_mode = dev_test_mode
@@ -73,7 +71,7 @@ class RedisWrapper(object):
                           max_tries=MAX_TRIES)
     def delete(self, key):
         if self.dev_test_mode:
-            print(("Test Mode: would have run redis.delete({})".format(key)))
+            print(f"Test Mode: would have run redis.delete({key})")
         else:
             return self.redis.delete(key)
 
@@ -83,7 +81,7 @@ class RedisWrapper(object):
                           max_tries=MAX_TRIES)
     def hset(self, *args):
         if self.dev_test_mode:
-            print(("Test Mode: would have run redis.hset({})".format(args)))
+            print(f"Test Mode: would have run redis.hset({args})")
         else:
             return self.redis.hset(*args)
 
@@ -93,12 +91,12 @@ class RedisWrapper(object):
                           max_tries=MAX_TRIES)
     def hmset(self, *args):
         if self.dev_test_mode:
-            print(("Test Mode: would have run redis.hmset({})".format(args)))
+            print(f"Test Mode: would have run redis.hmset({args})")
         else:
             return self.redis.hmset(*args)
 
 
-class CwBotoWrapper(object):
+class CwBotoWrapper:
     def __init__(self, dev_test_mode=None):
         assert isinstance(dev_test_mode, bool)
         self.dev_test_mode = dev_test_mode
@@ -109,7 +107,7 @@ class CwBotoWrapper(object):
                           max_tries=MAX_TRIES)
     def put_metric_data(self, *args, **kwargs):
         if self.dev_test_mode:
-            print(("Test Mode: would have run put_metric_data({},{})".format(args, kwargs)))
+            print(f"Test Mode: would have run put_metric_data({args},{kwargs})")
         else:
             return self.client.put_metric_data(*args, **kwargs)
 
@@ -207,13 +205,13 @@ def create_alert(opsgenie_api_key, environment, deploy, queue_name, threshold, i
     alias = generate_alert_alias(environment, deploy, queue_name)
 
     if dev_test_mode:
-        print(("Test Mode: would have created Alert: {}".format(alias)))
+        print(f"Test Mode: would have created Alert: {alias}")
     else:
-        print(("Creating Alert: {}".format(alias)))
+        print(f"Creating Alert: {alias}")
         response = AlertApi().create_alert(body=CreateAlertRequest(message=alert_msg, alias=alias, description=info))
-        print(('request id: {}'.format(response.request_id)))
-        print(('took: {}'.format(response.took)))
-        print(('result: {}'.format(response.result)))
+        print(f'request id: {response.request_id}')
+        print(f'took: {response.took}')
+        print(f'result: {response.result}')
 
 
 @backoff.on_exception(backoff.expo,
@@ -228,14 +226,14 @@ def close_alert(opsgenie_api_key, environment, deploy, queue_name, dev_test_mode
     alias = generate_alert_alias(environment, deploy, queue_name)
 
     if dev_test_mode:
-        print(("Test Mode: would have closed Alert: {}".format(alias)))
+        print(f"Test Mode: would have closed Alert: {alias}")
     else:
-        print(("Closing Alert: {}".format(alias)))
+        print(f"Closing Alert: {alias}")
         # Need body=CloseAlertRequest(source="") otherwise OpsGenie API complains that body must be a json object
         response = AlertApi().close_alert(identifier=alias, identifier_type='alias', body=CloseAlertRequest(source=""))
-        print(('request id: {}'.format(response.request_id)))
-        print(('took: {}'.format(response.took)))
-        print(('result: {}'.format(response.result)))
+        print(f'request id: {response.request_id}')
+        print(f'took: {response.took}')
+        print(f'result: {response.result}')
 
 
 def extract_body(task):
@@ -381,8 +379,8 @@ def check_queues(host, port, environment, deploy, default_threshold, queue_thres
                  jenkins_build_url, max_metrics, dev_test_mode):
     ret_val = 0
     thresholds = dict(queue_threshold)
-    print(("Default Threshold (seconds): {}".format(default_threshold)))
-    print(("Per Queue Thresholds (seconds):\n{}".format(pretty_json(thresholds))))
+    print(f"Default Threshold (seconds): {default_threshold}")
+    print("Per Queue Thresholds (seconds):\n{}".format(pretty_json(thresholds)))
 
     timeout = 1
     redis_client = RedisWrapper(host=host, port=port, socket_timeout=timeout,
@@ -390,15 +388,15 @@ def check_queues(host, port, environment, deploy, default_threshold, queue_thres
     celery_control = celery_connection(host, port).control
     cloudwatch = CwBotoWrapper(dev_test_mode=dev_test_mode)
 
-    namespace = "celery/{}-{}".format(environment, deploy)
+    namespace = f"celery/{environment}-{deploy}"
     metric_name = 'next_task_age'
     dimension = 'queue'
     next_task_age_metric_data = []
 
-    queue_names = set([k.decode() for k in redis_client.keys()
+    queue_names = {k.decode() for k in redis_client.keys()
                        if (redis_client.type(k) == b'list' and
                            not k.decode().endswith(".pidbox") and
-                           not k.decode().startswith("_kombu"))])
+                           not k.decode().startswith("_kombu"))}
     queue_age_hash = redis_client.hgetall(QUEUE_AGE_HASH_NAME)
 
     # key: queue name, value: list of worker nodes for each queue
@@ -413,7 +411,7 @@ def check_queues(host, port, environment, deploy, default_threshold, queue_thres
 
     old_state = unpack_state(queue_age_hash)
     # Temp debugging
-    print(("DEBUG: old_state\n{}\n".format(pretty_state(old_state))))
+    print("DEBUG: old_state\n{}\n".format(pretty_state(old_state)))
     queue_first_items = {}
     current_time = datetime.datetime.now()
 
@@ -429,7 +427,7 @@ def check_queues(host, port, environment, deploy, default_threshold, queue_thres
     new_state = build_new_state(old_state, queue_first_items, current_time)
 
     # Temp debugging
-    print(("DEBUG: new_state from new_state() function\n{}\n".format(pretty_state(new_state))))
+    print("DEBUG: new_state from new_state() function\n{}\n".format(pretty_state(new_state)))
     for queue_name, first_item in queue_first_items.items():
         redacted_body = ""
         threshold = default_threshold
@@ -442,7 +440,7 @@ def check_queues(host, port, environment, deploy, default_threshold, queue_thres
         try:
             body = extract_body(first_item)
         except Exception as error:
-            print(("ERROR: Unable to extract task body in queue {}, exception {}".format(queue_name, error)))
+            print(f"ERROR: Unable to extract task body in queue {queue_name}, exception {error}")
             print(traceback.format_exc())
             ret_val = 1
         redacted_body = {'task': body.get('task'), 'args': 'REDACTED', 'kwargs': 'REDACTED'}
@@ -496,7 +494,7 @@ def check_queues(host, port, environment, deploy, default_threshold, queue_thres
             new_state[queue_name]['alert_created'] = False
 
     for queue_name in set(old_state.keys()) - set(new_state.keys()):
-        print(("DEBUG: Checking cleared queue {}".format(queue_name)))
+        print(f"DEBUG: Checking cleared queue {queue_name}")
         if old_state[queue_name]['alert_created']:
             close_alert(opsgenie_api_key, environment, deploy, queue_name, dev_test_mode=dev_test_mode)
 
@@ -504,12 +502,12 @@ def check_queues(host, port, environment, deploy, default_threshold, queue_thres
     if new_state:
         redis_client.hmset(QUEUE_AGE_HASH_NAME, pack_state(new_state))
         # Temp Debugging
-        print(("DEBUG: new_state pushed to redis\n{}\n".format(pretty_state(new_state))))
+        print("DEBUG: new_state pushed to redis\n{}\n".format(pretty_state(new_state)))
 
     # Push next_task_age data to cloudwatch for tracking
     if len(next_task_age_metric_data) > 0:
         for metric_data_grouped in grouper(next_task_age_metric_data, max_metrics):
-            print(("next_task_age_metric_data {}".format(next_task_age_metric_data)))
+            print(f"next_task_age_metric_data {next_task_age_metric_data}")
             cloudwatch.put_metric_data(Namespace=namespace, MetricData=next_task_age_metric_data)
 
     sys.exit(ret_val)

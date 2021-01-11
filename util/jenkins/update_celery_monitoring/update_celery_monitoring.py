@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import print_function
 import re
 import redis
 import click
@@ -17,7 +15,7 @@ MAX_TRIES = 5
 queue_blacklist = ['celery', 'ecommerce']
 
 
-class RedisWrapper(object):
+class RedisWrapper:
     def __init__(self, *args, **kwargs):
         self.redis = redis.StrictRedis(*args, **kwargs)
 
@@ -43,7 +41,7 @@ class RedisWrapper(object):
         return self.redis.llen(key)
 
 
-class CwBotoWrapper(object):
+class CwBotoWrapper:
     def __init__(self, dev_test_mode=True):
         self.dev_test_mode = dev_test_mode
         self.client = boto3.client('cloudwatch')
@@ -59,7 +57,7 @@ class CwBotoWrapper(object):
                           max_tries=MAX_TRIES)
     def put_metric_data(self, *args, **kwargs):
         if self.dev_test_mode:
-            print(("Test Mode: would have run put_metric_data({},{})".format(args, kwargs)))
+            print(f"Test Mode: would have run put_metric_data({args},{kwargs})")
         else:
             return self.client.put_metric_data(*args, **kwargs)
 
@@ -74,12 +72,12 @@ class CwBotoWrapper(object):
                           max_tries=MAX_TRIES)
     def put_metric_alarm(self, *args, **kwargs):
         if self.dev_test_mode:
-            print(("Test Mode: would have run put_metric_alarm({},{})".format(args, kwargs)))
+            print(f"Test Mode: would have run put_metric_alarm({args},{kwargs})")
         else:
             return self.client.put_metric_alarm(*args, **kwargs)
 
 
-class Ec2BotoWrapper(object):
+class Ec2BotoWrapper:
     def __init__(self):
         self.client = boto3.client('ec2')
 
@@ -156,7 +154,7 @@ def check_queues(host, port, environment, deploy, max_metrics, threshold,
     redis_client = RedisWrapper(host=host, port=port, socket_timeout=timeout,
                                 socket_connect_timeout=timeout)
     cloudwatch = CwBotoWrapper(dev_test_mode=dev_test_mode)
-    namespace = "celery/{}-{}".format(environment, deploy)
+    namespace = f"celery/{environment}-{deploy}"
     metric_name = 'queue_length'
     dimension = 'queue'
     response = cloudwatch.list_metrics(Namespace=namespace,
@@ -171,10 +169,10 @@ def check_queues(host, port, environment, deploy, max_metrics, threshold,
                 not d['Value'].endswith(".pidbox") and
                 not d['Value'].startswith("_kombu"))])
 
-    redis_queues = set([k.decode() for k in redis_client.keys()
+    redis_queues = {k.decode() for k in redis_client.keys()
                         if (redis_client.type(k) == b'list' and
                             not k.decode().endswith(".pidbox") and
-                            not k.decode().startswith("_kombu"))])
+                            not k.decode().startswith("_kombu"))}
 
     all_queues = existing_queues + list(
         set(redis_queues).difference(existing_queues)
@@ -218,7 +216,7 @@ def check_queues(host, port, environment, deploy, max_metrics, threshold,
         existing_alarms = cloudwatch.describe_alarms(AlarmNames=[alarm_name])['MetricAlarms']
         do_put_alarm = False
         if len(existing_alarms) > 1:
-            print(("WARNINING: found multiple existing alarms for {}".format(alarm_name)))
+            print(f"WARNINING: found multiple existing alarms for {alarm_name}")
             pprint(existing_alarms)
             do_put_alarm = True
         elif len(existing_alarms) == 1:
@@ -246,14 +244,14 @@ def check_queues(host, port, environment, deploy, max_metrics, threshold,
                       existing_alarm.get('AlarmActions')[0] == actions[0]):
                 do_put_alarm = True
             if do_put_alarm:
-                print(('Updating existing alarm "{}"'.format(alarm_name)))
+                print(f'Updating existing alarm "{alarm_name}"')
         else:
             do_put_alarm = True
-            print(('Creating new alarm "{}"'.format(alarm_name)))
+            print(f'Creating new alarm "{alarm_name}"')
         if not do_put_alarm:
-            print(('Not updating alarm "{}", no changes'.format(alarm_name)))
+            print(f'Not updating alarm "{alarm_name}", no changes')
         else:
-            print(('put_alarm_metric: {}'.format(alarm_name)))
+            print(f'put_alarm_metric: {alarm_name}')
             cloudwatch.put_metric_alarm(AlarmName=alarm_name,
                                         AlarmDescription=alarm_name,
                                         Namespace=namespace,

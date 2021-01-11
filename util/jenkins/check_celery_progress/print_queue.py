@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import print_function
 import sys
 import pickle
 import json
@@ -12,7 +10,6 @@ import backoff
 from celery import Celery
 from textwrap import dedent
 from pprint import pprint
-from six.moves import range
 
 
 MAX_TRIES = 5
@@ -20,7 +17,7 @@ QUEUE_AGE_HASH_NAME = "queue_age_monitoring"
 DATE_FORMAT = '%Y-%m-%d %H:%M:%S.%f'
 
 
-class RedisWrapper(object):
+class RedisWrapper:
     def __init__(self, *args, **kwargs):
         self.redis = redis.StrictRedis(*args, **kwargs)
 
@@ -198,7 +195,7 @@ def check_queues(host, port, queue, items, body):
         print(("Exception while getting queue to worker mappings:", e))
 
     for count in range(items):
-        print(("Count: {}".format(count)))
+        print(f"Count: {count}")
         queue_first_item = redis_client.lindex(queue_name, count)
         # Check that queue_first_item is not None which is the case if the queue is empty
         if queue_first_item is not None:
@@ -210,7 +207,7 @@ def check_queues(host, port, queue, items, body):
             try:
                 extracted_body = extract_body(queue_first_item_decoded)
             except Exception as error:
-                print(("ERROR: Unable to extract task body in queue {}, exception {}".format(queue_name, error)))
+                print(f"ERROR: Unable to extract task body in queue {queue_name}, exception {error}")
                 ret_val = 1
             active_tasks, redacted_active_tasks = get_active_tasks(celery_control, queue_workers, queue_name)
 

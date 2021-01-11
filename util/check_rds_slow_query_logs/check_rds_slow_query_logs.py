@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-from __future__ import print_function
 import boto3
 import click
 
@@ -112,11 +110,11 @@ def cli(db_engine, ignore):
             exit_status = 1
             slow_query_logs_disabled_rds.append(db_identifier)
 
-    print(("Slow query logs are disabled for RDS Instances\n{0}".format(slow_query_logs_disabled_rds)))
+    print(f"Slow query logs are disabled for RDS Instances\n{slow_query_logs_disabled_rds}")
     print()
-    print(("Instance parameter groups out of sync/pending reboot for RDS Instances\n{0}".format(instances_out_of_sync_with_instance_parameters)))
+    print(f"Instance parameter groups out of sync/pending reboot for RDS Instances\n{instances_out_of_sync_with_instance_parameters}")
     print()
-    print(("Cluster parameter groups out of sync/pending reboot for RDS Instances\n{0}".format(instances_out_of_sync_with_cluster_parameters)))
+    print(f"Cluster parameter groups out of sync/pending reboot for RDS Instances\n{instances_out_of_sync_with_cluster_parameters}")
     exit(exit_status)
 
 if __name__ == '__main__':
