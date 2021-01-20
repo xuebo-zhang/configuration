@@ -13,7 +13,7 @@ jobs:
     strategy:
       max-parallel: 4
       matrix:
-        python-version: [3.5, 3.8]
+        python-version: [3.8]
 
     steps:
     - uses: actions/checkout@v2
@@ -27,4 +27,4 @@ jobs:
         pip install -r requirements.txt
     - name: Run Make test.syntax
       run: |
-        timeout 90m make --keep-going test.syntax 
+        timeout 90m make --keep-going test.syntax
