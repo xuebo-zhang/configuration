@@ -4,13 +4,13 @@
 #
 #    make upgrade
 #
-awscli==1.18.207
+awscli==1.19.28
     # via -r requirements/celery.in
 backoff==1.4.3
     # via -r requirements/celery.in
-boto3==1.16.47
+boto3==1.17.28
     # via -r requirements/celery.in
-botocore==1.19.47
+botocore==1.20.28
     # via
     #   awscli
     #   boto3
@@ -29,17 +29,17 @@ pyasn1==0.4.8
     # via rsa
 python-dateutil==2.8.1
     # via botocore
-pyyaml==5.3.1
+pyyaml==5.4.1
     # via awscli
 redis==2.10.6
     # via -r requirements/celery.in
 rsa==4.5
     # via awscli
-s3transfer==0.3.3
+s3transfer==0.3.4
     # via
     #   awscli
     #   boto3
 six==1.15.0
     # via python-dateutil
-urllib3==1.26.2
+urllib3==1.26.4
     # via botocore
