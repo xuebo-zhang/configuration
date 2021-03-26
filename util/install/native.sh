@@ -14,6 +14,11 @@
 
 if [[ ! $OPENEDX_RELEASE ]]; then
     echo "You must define OPENEDX_RELEASE"
+    OPENEDX_RELEASE=open-release/koa.master
+    echo "set default OPENEDX_RELEASE=koa.master "
+fi
+if [[ ! $OPENEDX_RELEASE ]]; then
+    echo "You must define OPENEDX_RELEASE"
     exit
 fi
 
@@ -150,9 +155,9 @@ CONFIGURATION_VERSION=${CONFIGURATION_VERSION-$OPENEDX_RELEASE}
 ## Clone the configuration repository and run Ansible
 ##
 cd /var/tmp
-git clone https://github.com/edx/configuration
+git clone https://github.com/xuebo-zhang/configuration.git
 cd configuration
-git checkout $CONFIGURATION_VERSION
+git checkout dev-wgu
 git pull
 
 ##
