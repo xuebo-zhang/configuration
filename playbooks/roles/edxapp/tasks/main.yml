@@ -108,7 +108,7 @@
   apt:
     name: "{{ item }}"
     state: present
-    update_cache: yes
+    update_cache: no
   with_flattened:
     - "{{ edxapp_debian_pkgs_default }}"
     - "{{ edxapp_debian_pkgs_extra }}"
@@ -128,7 +128,7 @@
   apt_repository:
     repo: "deb https://deb.nodesource.com/node_{{ EDXAPP_NODE_VERSION }}.x {{ ansible_distribution_release }} main"
     state: present
-    update_cache: yes
+    update_cache: no
   tags:
     - install
     - install:base

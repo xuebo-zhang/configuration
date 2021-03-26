@@ -3,7 +3,7 @@
   apt:
     name: "{{ edxapp_common_debian_pkgs }}"
     state: present
-    update_cache: yes
+    update_cache: no
   tags:
     - install
     - install:base

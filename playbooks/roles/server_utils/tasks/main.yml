@@ -35,5 +35,5 @@
     name: "{{ server_utils_debian_pkgs }}"
     install_recommends: yes
     state: present
-    update_cache: yes
+    update_cache: no
   when: ansible_distribution in common_debian_variants
